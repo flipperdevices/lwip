@@ -591,6 +591,7 @@ accept_function(void *arg, struct tcp_pcb *newpcb, err_t err)
     /* no need to drain since we know the recvmbox is empty. */
     sys_mbox_free(&newconn->recvmbox);
     sys_mbox_set_invalid(&newconn->recvmbox);
+    newconn->flags |= NETCONN_FLAG_MBOXINVALID; // https://github.com/flipperdevices/bsb-firmware/blob/44ee94a8031a38a2305979ae7b0a2e8eb529d60b/targets/f21/lwip/lwipopts.h#L11-L17
     netconn_free(newconn);
     return ERR_MEM;
   } else {
