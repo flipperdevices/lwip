@@ -1752,55 +1752,55 @@ nd6_is_prefix_in_netif(const ip6_addr_t *ip6addr, struct netif *netif)
     }
   }
 
-  // [by Flipper Devices]
-  // The original RIO patch includes this loop. It appears to be a logical error.
-  //
-  // Consider the following home network:
-  //
-  // +-------------+ fe80::dead     fe80::1 +--------------+
-  // | This device |<---------------------->| Wi-Fi router |
-  // +-------------+  Wi-Fi          Wi-Fi  +--------------+
-  //                                          Wi-Fi ^ fe80::1
-  //                                                |
-  //                                                |
-  //                                          Wi-Fi v fe80::beef
-  //  Wi-Fi, fe80::/64 addresses            +--------------+
-  // - - - - - - - - - - - - - - - - - - - -|   RPi OTBR   |- - - - - - - - - -
-  //  Thread, fd01::/64 addresses           +--------------+
-  //                                         Thread ^ fd01::1234
-  //                                                |
-  //                                                |
-  //                                         Thread v fd01::5678
-  //                                      +--------------------+
-  //                                      | Happy light switch |
-  //                                      +--------------------+
-  //
-  // The OTBR (OpenThread Border Router) sends out Router Advertisement messages
-  // with a RIO option to tell everyone that it can route to the fe01::/64 Thread
-  // subnet.
-  //
-  // When we want to send data to the light switch, lwIP incorrectly assumes that
-  // its fe01::/64 IP is directly reachable via our MAC layer, thanks to the loop
-  // below. Obviously, it's not reachable via our MAC layer only, and since we've
-  // never heard a Neighbor Advertisement message from fd01::5678 (since it's not
-  // a neighbor to us), we can't determine the MAC address to forward the packet
-  // to. lwIP thus starts its Neighbor Solicitation probing and fails (sine,
-  // again, it's not our neighbor).
-  //
-  // By commenting out this loop, the correct mechanism for determining the next
-  // hop is used: searching through previously received RIO information in
-  // function `nd6_get_next_hop_entry`.
-
-  //
-  // #if LWIP_ND6_SUPPORT_RIO
-  //   for (i = 0; i < LWIP_ND6_NUM_ROUTES; i++) {
-  //     if ((route_list[i].netif == netif) &&
-  //         (route_list[i].invalidation_timer > 0) &&
-  //         ip6_addr_net_eq(ip6addr, &(route_list[i].prefix))) {
-  //       return 1;
-  //     }
-  //   }
-  // #endif
+  /* [by Flipper Devices]
+   * The original RIO patch includes this loop. It appears to be a logical error.
+   *
+   * Consider the following home network:
+   *
+   * +-------------+ fe80::dead     fe80::1 +--------------+
+   * | This device |<---------------------->| Wi-Fi router |
+   * +-------------+  Wi-Fi          Wi-Fi  +--------------+
+   *                                          Wi-Fi ^ fe80::1
+   *                                                |
+   *                                                |
+   *                                          Wi-Fi v fe80::beef
+   *  Wi-Fi, fe80::/64 addresses            +--------------+
+   * - - - - - - - - - - - - - - - - - - - -|   RPi OTBR   |- - - - - - - - - -
+   *  Thread, fd01::/64 addresses           +--------------+
+   *                                         Thread ^ fd01::1234
+   *                                                |
+   *                                                |
+   *                                         Thread v fd01::5678
+   *                                      +--------------------+
+   *                                      | Happy light switch |
+   *                                      +--------------------+
+   *
+   * The OTBR (OpenThread Border Router) sends out Router Advertisement messages
+   * with a RIO option to tell everyone that it can route to the fe01::/64 Thread
+   * subnet.
+   *
+   * When we want to send data to the light switch, lwIP incorrectly assumes that
+   * its fe01::/64 IP is directly reachable via our MAC layer, thanks to the loop
+   * below. Obviously, it's not reachable via our MAC layer only, and since we've
+   * never heard a Neighbor Advertisement message from fd01::5678 (since it's not
+   * a neighbor to us), we can't determine the MAC address to forward the packet
+   * to. lwIP thus starts its Neighbor Solicitation probing and fails (sine,
+   * again, it's not our neighbor).
+   *
+   * By commenting out this loop, the correct mechanism for determining the next
+   * hop is used: searching through previously received RIO information in
+   * function `nd6_get_next_hop_entry`.
+   *
+   *
+   * #if LWIP_ND6_SUPPORT_RIO
+   *   for (i = 0; i < LWIP_ND6_NUM_ROUTES; i++) {
+   *     if ((route_list[i].netif == netif) &&
+   *         (route_list[i].invalidation_timer > 0) &&
+   *         ip6_addr_net_eq(ip6addr, &(route_list[i].prefix))) {
+   *       return 1;
+   *     }
+   *   }
+   * #endif */
   return 0;
 }
 
